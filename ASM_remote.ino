@@ -8,6 +8,7 @@
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 #include <ElegantOTA.h>
+#include "include.h"
 
 const char* ap_default_ssid = STASSID; ///< Default SSID.
 const char* ap_default_psk = STAPSK; ///< Default PSK.

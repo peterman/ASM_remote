@@ -8,17 +8,26 @@
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 #include <ElegantOTA.h>
-#include "include.h"
+#include <FS.h>
+#include <LittleFS.h>
+#include <DNSServer.h>
+#include <ArduinoJson.h>
+
+FS* filesystem = &SPIFFS;
 
 const char* ap_default_ssid = STASSID; ///< Default SSID.
 const char* ap_default_psk = STAPSK; ///< Default PSK.
 
 #define HOSTNAME "ESP8266-OTA-"
 
-
-
-
 ESP8266WebServer server(80);
+//holds the current upload
+File fsUploadFile;
+
+
+#include "filesystem.h"
+#include "webserver.h"
+
 
 
 void setup(void) {
@@ -33,11 +42,25 @@ void setup(void) {
   hostname += String(ESP.getChipId(), HEX);
   WiFi.hostname(hostname);
 
-   // Initialize file system.
-  if (!SPIFFS.begin()) {
-    Serial.println("Failed to mount file system");
-    return;
-  }
+  filesystem->begin();
+    {
+        Dir dir = filesystem->openDir("/");
+        while (dir.next()) {
+            String fileName = dir.fileName();
+            size_t fileSize = dir.fileSize();
+            Serial.printf("FS File: %s, size: %s\n", fileName.c_str(), formatBytes(fileSize).c_str());
+        }
+        Serial.printf("\n");
+    }
+    //Load Config -------------------------------------------
+    if (!loadConfig()) {
+        Serial.println("Failed to load config");
+        saveConfig();
+    }
+    else {
+        Serial.println("Config loaded");
+    }
+    
 
   // Check WiFi connection
   // ... check mode
@@ -98,10 +121,33 @@ Serial.println("Wait for WiFi connection.");
 
   
   
-  server.on("/", []() {
-    server.send(200, "text/plain", "Hi! I am ESP8266.");
-  });
+//  server.on("/", []() {server.send(200, "text/plain", "Hi! I am ESP8266.");  });
+  //list directory
+  server.on("/list", HTTP_GET, handleFileList);
+  //load editor
+  server.on("/edit", HTTP_GET, []() {
+      if (!handleFileRead("/edit.htm")) {
+          server.send(404, "text/plain", "FileNotFound");
+      }
+     });
+  //create file
+  server.on("/edit", HTTP_PUT, handleFileCreate);
+  //delete file
+  server.on("/edit", HTTP_DELETE, handleFileDelete);
+  //first callback is called after the request has ended with all parsed arguments
+  //second callback handles file uploads at that location
+  server.on("/edit", HTTP_POST, []() {
+      server.send(200, "text/plain", "");
+      }, handleFileUpload);
+  //called when the url is not defined here
+  //use it to load content from SPIFFS
+  server.onNotFound([]() {
+      if (!handleFileRead(server.uri())) {
+          server.send(404, "text/plain", "FileNotFound");
+      }
+    });
 
+  
   ElegantOTA.begin(&server);    // Start ElegantOTA
   server.begin();
   Serial.println("HTTP server started");

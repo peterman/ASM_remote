@@ -43,16 +43,25 @@ bool loadConfig() {
 //save config or new config
 bool saveConfig() {
     StaticJsonDocument<200> doc;
-    doc["serverName"] = "api.example.com";
-    doc["accessToken"] = "128du9as8du12eoue8da98h123ueh9h98";
-
+    JsonObject root = doc.to<JsonObject>();
+    root["serverName"] = "api.example.com";
+    root["accessToken"] = "128du9as8du12eoue8da98h123ueh9h98";
+    JsonObject wifi = root.createNestedObject("wifi");
+    wifi["SSID"] = "test";
+    wifi["PSK"] = "0123456789";
+    JsonObject cycle = root.createNestedObject("cycle");
+    cycle["timer_loop"] = 1000;
+    cycle["timer_max"] = 10000;
+    cycle["timer_min"] = 100;
+    
+    
     File configFile = filesystem->open("/config.json", "w");
     if (!configFile) {
         Serial.println("Failed to open config file for writing");
         return false;
     }
 
-    serializeJson(doc, configFile);
+    serializeJson(root, configFile);
     return true;
 }
 

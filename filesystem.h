@@ -2,13 +2,13 @@
 bool loadConfig() {
     File configFile = filesystem->open("/config.json", "r");
     if (!configFile) {
-        Serial.println("Failed to open config file");
+        Serial1.println("Failed to open config file");
         return false;
     }
 
     size_t size = configFile.size();
     if (size > 1024) {
-        Serial.println("Config file size is too large");
+        Serial1.println("Config file size is too large");
         return false;
     }
 
@@ -23,7 +23,7 @@ bool loadConfig() {
     StaticJsonDocument<200> doc;
     auto error = deserializeJson(doc, buf.get());
     if (error) {
-        Serial.println("Failed to parse config file");
+        Serial1.println("Failed to parse config file");
         return false;
     }
 
@@ -33,10 +33,10 @@ bool loadConfig() {
     // Real world application would store these values in some variables for
     // later use.
 
-    Serial.print("Loaded serverName: ");
-    Serial.println(serverName);
-    Serial.print("Loaded accessToken: ");
-    Serial.println(accessToken);
+    Serial1.print("Loaded serverName: ");
+    Serial1.println(serverName);
+    Serial1.print("Loaded accessToken: ");
+    Serial1.println(accessToken);
     return true;
 }
 
@@ -57,7 +57,7 @@ bool saveConfig() {
     
     File configFile = filesystem->open("/config.json", "w");
     if (!configFile) {
-        Serial.println("Failed to open config file for writing");
+        Serial1.println("Failed to open config file for writing");
         return false;
     }
 

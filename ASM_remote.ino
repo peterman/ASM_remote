@@ -24,6 +24,7 @@ String LS_Status="";
 String LS_Fil="";
 String LS_Rate="";
 String LS_Pe="";
+unsigned long startTime;
 
 #define HOSTNAME "ESP8266-"
 
@@ -42,8 +43,8 @@ void setup(void) {
   String station_ssid = "esp001";
   String station_psk = "12345678";
   
-  Serial1.begin(9600);
   Serial.begin(9600);
+  Serial1.begin(9600);
   // reserve 200 bytes for the inputString:
   inputString.reserve(200);
   delay(100);
@@ -62,18 +63,13 @@ void setup(void) {
         while (dir.next()) {
             String fileName = dir.fileName();
             size_t fileSize = dir.fileSize();
-            Serial1.printf("FS File: %s, size: %s\n", fileName.c_str(), formatBytes(fileSize).c_str());
         }
-        Serial1.printf("\n");
     }
     //Load Config -------------------------------------------
     if (!loadConfig()) {
-        Serial1.println("Failed to load config");
         saveConfig();
     }
-    else {
-        Serial1.println("Config loaded");
-    }
+    
     
 
   // Check WiFi connection
@@ -85,15 +81,12 @@ void setup(void) {
 
 // ... Compare file config with sdk config.
   if (WiFi.SSID() != station_ssid || WiFi.psk() != station_psk) {
-    Serial1.println("WiFi config changed.");
-
+    
     // ... Try to connect to WiFi station.
     WiFi.begin(station_ssid.c_str(), station_psk.c_str());
 
     // ... Pritn new SSID
-    Serial1.print("new SSID: ");
-    Serial1.println(WiFi.SSID());
-
+    
     // ... Uncomment this for debugging output.
     //WiFi.printDiag(Serial1);
   } else {
@@ -101,25 +94,15 @@ void setup(void) {
     WiFi.begin();
   }
 
-Serial1.println("Wait for WiFi connection.");
 
   // ... Give ESP 10 seconds to connect to station.
-  unsigned long startTime = millis();
+  startTime = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - startTime < 10000) {
-    Serial1.write('.');
-    //Serial1.print(WiFi.status());
     delay(500);
   }
-  Serial1.println();
 
   // Check connection
-  if (WiFi.status() == WL_CONNECTED) {
-    // ... print IP Address
-    Serial1.print("IP address: ");
-    Serial1.println(WiFi.localIP());
-  } else {
-    Serial1.println("Can not connect to WiFi station. Go into AP mode.");
-
+  if (WiFi.status() != WL_CONNECTED) {
     // Go into software AP mode.
     WiFi.mode(WIFI_AP);
 
@@ -127,9 +110,7 @@ Serial1.println("Wait for WiFi connection.");
 
     WiFi.softAP(ap_default_ssid, ap_default_psk);
 
-    Serial1.print("IP address: ");
-    Serial1.println(WiFi.softAPIP());
-  }
+    }
 
   
 
@@ -191,8 +172,14 @@ Serial1.println("Wait for WiFi connection.");
 void loop(void) {
   server.handleClient();
   Debug.handle();
-  if (stringComplete) {
+  ESPserialEvent();
+  if (millis() - startTime > 5000) {
+    debugV("%d", millis());
     debugV("%s",inputString.c_str());
+    startTime = millis();
+    }
+  if (stringComplete) {
+    
     LS_Status=inputString.substring(0,15);  debugI("Status:       %s", LS_Status.c_str());
     LS_Fil=inputString.substring(15,18);    debugI("Filament:     %s", LS_Fil.c_str());
     LS_Rate=inputString.substring(21,29);   debugI("Leckrate:     %s", LS_Rate.c_str());

@@ -33,10 +33,7 @@ bool loadConfig() {
     // Real world application would store these values in some variables for
     // later use.
 
-    Serial1.print("Loaded serverName: ");
-    Serial1.println(serverName);
-    Serial1.print("Loaded accessToken: ");
-    Serial1.println(accessToken);
+    
     return true;
 }
 

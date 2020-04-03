@@ -16,7 +16,6 @@ String getContentType(String filename) {
 }
 
 bool handleFileRead(String path) {
-    Serial1.println("handleFileRead: " + path);
     if (path.endsWith("/")) {
         path += "index.htm";
     }
@@ -44,12 +43,10 @@ void handleFileUpload() {
         if (!filename.startsWith("/")) {
             filename = "/" + filename;
         }
-        Serial1.print("handleFileUpload Name: "); Serial1.println(filename);
         fsUploadFile = filesystem->open(filename, "w");
         filename = String();
     }
     else if (upload.status == UPLOAD_FILE_WRITE) {
-        //Serial.print("handleFileUpload Data: "); Serial.println(upload.currentSize);
         if (fsUploadFile) {
             fsUploadFile.write(upload.buf, upload.currentSize);
         }
@@ -58,7 +55,6 @@ void handleFileUpload() {
         if (fsUploadFile) {
             fsUploadFile.close();
         }
-        Serial1.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
     }
 }
 
@@ -67,7 +63,6 @@ void handleFileDelete() {
         return server.send(500, "text/plain", "BAD ARGS");
     }
     String path = server.arg(0);
-    Serial1.println("handleFileDelete: " + path);
     if (path == "/") {
         return server.send(500, "text/plain", "BAD PATH");
     }
@@ -84,7 +79,6 @@ void handleFileCreate() {
         return server.send(500, "text/plain", "BAD ARGS");
     }
     String path = server.arg(0);
-    Serial1.println("handleFileCreate: " + path);
     if (path == "/") {
         return server.send(500, "text/plain", "BAD PATH");
     }
@@ -109,7 +103,6 @@ void handleFileList() {
     }
 
     String path = server.arg("dir");
-    Serial1.println("handleFileList: " + path);
     Dir dir = filesystem->openDir(path);
     path = String();
 
